@@ -1,3 +1,15 @@
+/**
+ * Name: Rishi Doshi
+ * CSC 345 Programming Project 1
+ * search.java
+ *
+ * Simulates Logic's teleport-based search on a 100x100 grid.
+ * Uses a sparse orthogonal-list visited structure to minimize memory usage.
+ *
+ * Run: javac search.java
+ *      java search input.txt
+ */
+
 import java.util.*;
 import java.io.*;
 
