@@ -6,6 +6,7 @@ public class search {
     private static final int SIZE = 100;
     private static final int CENTER_COL = 50;
     private static final int CENTER_ROW = 50;
+    private static final boolean SORT_OUTPUT = true;
 
     private static final int TRAVEL_PER_ADJ = 1; //HOURS
     private static final int SEARCH_TIME = 2; //HOURS
@@ -101,7 +102,7 @@ public class search {
         int curRow = CENTER_ROW;
 
         Sim() {
-            // Center is considered already searched. :contentReference[oaicite:6]{index=6}
+            // Center is considered already searched.
             visited.add(CENTER_COL, CENTER_ROW);
         }
 
@@ -109,7 +110,7 @@ public class search {
             totalHours += SLEEP_TIME;
             awakeHours = 0;
             // They return to center to sleep; teleport time is not specified as >0,
-            // so we don't add travel time here (sleep itself is 8 hours). :contentReference[oaicite:7]{index=7}
+            // so we don't add travel time here (sleep itself is 8 hours).
             curCol = CENTER_COL;
             curRow = CENTER_ROW;
         }
@@ -137,7 +138,7 @@ public class search {
             visited.add(col, row);
             searchedOrder.add(new Point(col, row));
 
-            // If we've hit the max awake time exactly, sleep immediately. :contentReference[oaicite:8]{index=8}
+            // If we've hit the max awake time exactly, sleep immediately.
             if (awakeHours == MAX_AWAKE) {
                 sleepNow();
             }
@@ -169,16 +170,19 @@ public class search {
         // Process each RS in order
         for (Point rs : input.randomSpots) {
 
+            if (!inBounds(rs.col, rs.row)) 
+                continue;
+
             // Teleport to RS (0 time); we start the RS routine from there.
             sim.curCol = rs.col;
             sim.curRow = rs.row;
 
-            // If RS + N/E/S/W are all already searched, skip to next RS. :contentReference[oaicite:9]{index=9}
+            // If RS + N/E/S/W are all already searched, skip to next RS.
             if (neighborhoodFullySearched(sim.visited, rs.col, rs.row)) {
                 continue;
             }
 
-            // Targets in order: RS, N, E, S, W :contentReference[oaicite:10]{index=10}
+            // Targets in order: RS, N, E, S, W
             int[][] targets = new int[][]{
                     {rs.col, rs.row},
                     {rs.col, rs.row - 1}, // north
@@ -197,10 +201,10 @@ public class search {
 
                 int dist = manhattan(sim.curCol, sim.curRow, c, r);
 
-                // If we can't finish traveling + searching another square before sleep, sleep early. :contentReference[oaicite:11]{index=11}
+                // If we can't finish traveling + searching another square before sleep, sleep early.
                 if (!sim.canDo(dist, SEARCH_TIME)) {
                     sim.sleepNow();
-                    break; // sleep interrupts the pattern; next RS after sleep. :contentReference[oaicite:12]{index=12}
+                    break; // sleep interrupts the pattern; next RS after sleep.
                 }
 
                 sim.searchSquare(c, r);
@@ -212,15 +216,28 @@ public class search {
             }
         }
 
-        // Output searched squares in required formatting + final hours. :contentReference[oaicite:13]{index=13}
-        for (Point p : sim.searchedOrder) {
+        // Output searched squares in required formatting + final hours.
+        List<Point> out = new ArrayList<>(sim.searchedOrder);
+
+        if (SORT_OUTPUT) {
+            if (input.outputMode.equals("row")) {
+                out.sort(Comparator.comparingInt((Point p) -> p.row)
+                                .thenComparingInt(p -> p.col));
+            } else { // "col"
+                out.sort(Comparator.comparingInt((Point p) -> p.col)
+                                .thenComparingInt(p -> p.row));
+            }
+        }
+
+        for (Point p : out) {
             if (input.outputMode.equals("row")) {
                 System.out.println(p.row + " " + p.col);
-            } else { // "col"
+            } else {
                 System.out.println(p.col + " " + p.row);
             }
         }
         System.out.println(sim.totalHours);
+
     }
 
     // ---------- Helpers ----------
@@ -258,9 +275,20 @@ public class search {
             }
 
             List<Point> rsList = new ArrayList<>();
-            for (int i = 0; i < nums.size(); i += 2) {
-                int col = nums.get(i);
-                int row = nums.get(i + 1);
+            for(int i = 0; i < nums.size(); i+= 2) {
+                int c = nums.get(i);
+                int r = nums. get(i + 1);
+
+                int col, row;
+                if(mode.equals("row")){
+                    row = c;
+                    col = r;
+                }
+                else {
+                    col = c;
+                    row = r;
+                }
+
                 rsList.add(new Point(col, row));
             }
 
@@ -271,7 +299,7 @@ public class search {
 
     private static boolean neighborhoodFullySearched(OrthoVisited visited, int col, int row) {
         // Treat out-of-bounds neighbors as "effectively searched" because they'd be skipped anyway.
-        // This makes edge RS behave reasonably with the rule. :contentReference[oaicite:15]{index=15}
+        // This makes edge RS behave reasonably with the rule.
         int[][] cells = new int[][]{
                 {col, row},
                 {col, row - 1},
